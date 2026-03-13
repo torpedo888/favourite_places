@@ -21,6 +21,7 @@ class PlacesList extends StatelessWidget {
     return ListView.builder(
       itemCount: places.length,
       itemBuilder: (context, index) => ListTile(
+        key: ValueKey(places[index].id),
         leading: CircleAvatar(
           radius: 26,
           backgroundImage: FileImage(places[index].image),
@@ -28,6 +29,10 @@ class PlacesList extends StatelessWidget {
         title: Text(places[index].title, 
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: Theme.of(context).colorScheme.onSurface,
+          ),),
+        subtitle: Text(places[index].location.address, 
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),),
         onTap: () {
           Navigator.of(context).push(

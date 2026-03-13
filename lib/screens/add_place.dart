@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:favourite_places/models/place.dart';
 import 'package:favourite_places/providers/places_provider.dart';
 import 'package:favourite_places/widgets/image_input.dart';
 import 'package:favourite_places/widgets/location_input.dart';
@@ -18,6 +19,7 @@ class AddPlaceScreen extends ConsumerStatefulWidget {
 class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   final _titleController = TextEditingController();
   File? _selectedImage;
+  PlaceLocation? _selectedLocation;
 
   @override
   void dispose() {
@@ -28,11 +30,15 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   void _savePlace() {
     final enteredTitle = _titleController.text;
 
-    if (enteredTitle.isEmpty || _selectedImage == null) {
+    if (enteredTitle.isEmpty || _selectedImage == null || _selectedLocation == null) {
       return;
     }
     //ref is available in the state of a ConsumerStatefulWidget, so we can use it to read the provider and call the addPlace method.
-    ref.read(placesProvider.notifier).addPlace(enteredTitle, _selectedImage!);
+    ref.read(placesProvider.notifier).addPlace(
+      enteredTitle,
+      _selectedImage!,
+      _selectedLocation!,
+    );
     Navigator.of(context).pop();
   }
 
@@ -57,7 +63,15 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               },
             ),
             const SizedBox(height: 16,),
-            LocationInput(),
+            LocationInput(
+              onSelectLocation: (latitude, longitude, address) {
+                _selectedLocation = PlaceLocation(
+                  latitude: latitude,
+                  longitude: longitude,
+                  address: address,
+                );
+              },
+            ),
             const SizedBox(height: 16,),
               ElevatedButton.icon(
                 onPressed: _savePlace,
