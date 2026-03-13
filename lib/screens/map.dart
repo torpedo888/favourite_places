@@ -8,36 +8,68 @@ class MapScreen extends StatefulWidget {
   const MapScreen({
     super.key,
     required this.location,
+    this.isSelecting = false,
   });
   
   final PlaceLocation location;
+  final bool isSelecting;
   
   @override
   _MapScreenState createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> {
+  LatLng? _pickedLocation;
+  final MapController _mapController = MapController();
+
+  void _zoomIn() {
+    final currentZoom = _mapController.camera.zoom;
+    _mapController.move(
+      _mapController.camera.center,
+      currentZoom + 1,
+    );
+  }
+
+  void _zoomOut() {
+    final currentZoom = _mapController.camera.zoom;
+    _mapController.move(
+      _mapController.camera.center,
+      currentZoom - 1,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Map'),
+        title: Text(widget.isSelecting ? 'Select Location' : 'Map'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.my_location),
-            onPressed: () {
-              // Could re-center the map if needed
-            },
-          ),
+          if (widget.isSelecting && _pickedLocation != null)
+            IconButton(
+              icon: const Icon(Icons.check),
+              onPressed: () {
+                Navigator.of(context).pop(_pickedLocation);
+              },
+            ),
         ],
       ),
-      body: FlutterMap(
+      body: Stack(
+        children: [
+          FlutterMap(
+            mapController: _mapController,
         options: MapOptions(
           initialCenter: LatLng(
             widget.location.latitude,
             widget.location.longitude,
           ),
           initialZoom: 16,
+          onTap: widget.isSelecting
+              ? (tapPosition, point) {
+                  setState(() {
+                    _pickedLocation = point;
+                  });
+                }
+              : null,
         ),
         children: [
           TileLayer(
@@ -47,23 +79,59 @@ class _MapScreenState extends State<MapScreen> {
           ),
           MarkerLayer(
             markers: [
-              Marker(
-                point: LatLng(
-                  widget.location.latitude,
-                  widget.location.longitude,
+              if (widget.isSelecting && _pickedLocation != null)
+                Marker(
+                  point: _pickedLocation!,
+                  width: 80,
+                  height: 80,
+                  child: const Icon(
+                    Icons.location_on,
+                    color: Colors.blue,
+                    size: 50,
+                  ),
                 ),
-                width: 80,
-                height: 80,
-                child: const Icon(
-                  Icons.location_on,
-                  color: Colors.red,
-                  size: 50,
+              if (!widget.isSelecting)
+                Marker(
+                  point: LatLng(
+                    widget.location.latitude,
+                    widget.location.longitude,
+                  ),
+                  width: 80,
+                  height: 80,
+                  child: const Icon(
+                    Icons.location_on,
+                    color: Colors.red,
+                    size: 50,
+                  ),
                 ),
-              ),
             ],
           ),
         ],
       ),
+          // Zoom controls
+          Positioned(
+            right: 16,
+            bottom: 100,
+            child: Column(
+              children: [
+                FloatingActionButton(
+                  heroTag: 'zoom_in',
+                  mini: true,
+                  onPressed: _zoomIn,
+                  child: const Icon(Icons.add),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton(
+                  heroTag: 'zoom_out',
+                  mini: true,
+                  onPressed: _zoomOut,
+                  child: const Icon(Icons.remove),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
-  } 
+  }
 }

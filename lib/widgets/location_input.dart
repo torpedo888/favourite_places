@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:favourite_places/models/place.dart';
+import 'package:favourite_places/screens/map.dart';
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -46,6 +48,50 @@ class _LocationInputState extends State<LocationInput> {
     }
     
     return _getLocationAddress(lat, lng);
+  }
+
+  void _selectOnMap() async {
+    final pickedLocation = await Navigator.of(context).push<LatLng>(
+      MaterialPageRoute(
+        builder: (ctx) => MapScreen(
+          location: PlaceLocation(
+            latitude: 37.422,
+            longitude: -122.084,
+            address: '',
+          ),
+          isSelecting: true,
+        ),
+      ),
+    );
+
+    if (pickedLocation == null) {
+      return;
+    }
+
+    setState(() {
+      _isGettingLocation = true;
+    });
+
+    final address = await _getAddressFromCoordinates(
+      pickedLocation.latitude,
+      pickedLocation.longitude,
+    );
+
+    final locationData = LocationData.fromMap({
+      'latitude': pickedLocation.latitude,
+      'longitude': pickedLocation.longitude,
+    });
+
+    setState(() {
+      _isGettingLocation = false;
+      _pickedLocation = locationData;
+    });
+
+    widget.onSelectLocation(
+      pickedLocation.latitude,
+      pickedLocation.longitude,
+      address,
+    );
   }
 
   void _getCurrentLocation() async {  
@@ -174,7 +220,7 @@ class _LocationInputState extends State<LocationInput> {
             TextButton.icon(
               icon: const Icon(Icons.map), 
               label: const Text('Select on Map'), 
-              onPressed: () {}),
+              onPressed: _selectOnMap),
           ],
         )
       ],
