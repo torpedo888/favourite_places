@@ -214,13 +214,21 @@ class _LocationInputState extends State<LocationInput> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             TextButton.icon(
-              icon: const Icon(Icons.location_on), 
-              label: const Text('Get Current Location'), 
-              onPressed: _getCurrentLocation),
+              icon: const Icon(Icons.my_location), 
+              label: const Text('Use GPS'), 
+              onPressed: _getCurrentLocation,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+            ),
             TextButton.icon(
-              icon: const Icon(Icons.map), 
-              label: const Text('Select on Map'), 
-              onPressed: _selectOnMap),
+              icon: const Icon(Icons.pin_drop), 
+              label: const Text('Pick on Map'), 
+              onPressed: _selectOnMap,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+            ),
           ],
         )
       ],

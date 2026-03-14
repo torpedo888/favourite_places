@@ -42,11 +42,12 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isSelecting ? 'Select Location' : 'Map'),
+        title: Text(widget.isSelecting ? 'Tap to Pick Location' : 'Map'),
         actions: [
           if (widget.isSelecting && _pickedLocation != null)
             IconButton(
               icon: const Icon(Icons.check),
+              tooltip: 'Confirm Location',
               onPressed: () {
                 Navigator.of(context).pop(_pickedLocation);
               },
@@ -63,11 +64,21 @@ class _MapScreenState extends State<MapScreen> {
             widget.location.longitude,
           ),
           initialZoom: 16,
+          minZoom: 3,
+          maxZoom: 18,
+          interactionOptions: const InteractionOptions(
+            flags: InteractiveFlag.pinchZoom | 
+                   InteractiveFlag.drag | 
+                   InteractiveFlag.doubleTapZoom |
+                   InteractiveFlag.flingAnimation,
+          ),
           onTap: widget.isSelecting
               ? (tapPosition, point) {
+                  print('Map tapped at: ${point.latitude}, ${point.longitude}');
                   setState(() {
                     _pickedLocation = point;
                   });
+                  print('Marker set to: $_pickedLocation');
                 }
               : null,
         ),
@@ -108,6 +119,39 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
+          // Instruction hint for selection mode
+          if (widget.isSelecting && _pickedLocation == null)
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.white, size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Tap anywhere on the map to place a marker',
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           // Zoom controls
           Positioned(
             right: 16,
