@@ -27,14 +27,14 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     super.dispose();
   }
 
-  void _savePlace() {
+  void _savePlace() async {
     final enteredTitle = _titleController.text;
 
     if (enteredTitle.isEmpty || _selectedImage == null || _selectedLocation == null) {
       return;
     }
     //ref is available in the state of a ConsumerStatefulWidget, so we can use it to read the provider and call the addPlace method.
-    ref.read(placesProvider.notifier).addPlace(
+    await ref.read(placesProvider.notifier).addPlace(
       enteredTitle,
       _selectedImage!,
       _selectedLocation!,

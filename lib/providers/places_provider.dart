@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:favourite_places/models/place.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart' as sysPaths;
 import 'package:sqflite/sqflite.dart' as sql;
 
 class PlacesNotifier extends Notifier<List<Place>> {
@@ -26,56 +25,75 @@ class PlacesNotifier extends Notifier<List<Place>> {
   }
 
   Future<void> loadPlaces() async {
-    final db = await _getDatabase();
+    try {
+      final db = await _getDatabase();
 
-    final dataList = await db.query('user_places');
-    final places = dataList.map((item) {
-      return Place(
-        id: item['id'] as String,
-        title: item['title'] as String,
-        image: File(item['image'] as String),
-        location: PlaceLocation(
-          latitude: item['loc_lat'] as double,
-          longitude: item['loc_lng'] as double,
-          address: item['address'] as String,
-        ),
-      );
-    }).toList();
+      final dataList = await db.query('user_places');
+      print('Loading places from database: ${dataList.length} items found');
+      
+      final places = <Place>[];
+      
+      for (var item in dataList) {
+        final imagePath = item['image'] as String;
+        final imageFile = File(imagePath);
+        
+        print('Loading place: ${item['title']} with image: $imagePath');
+        
+        // Check if image file still exists
+        if (await imageFile.exists()) {
+          places.add(Place(
+            id: item['id'] as String,
+            title: item['title'] as String,
+            image: imageFile,
+            location: PlaceLocation(
+              latitude: item['loc_lat'] as double,
+              longitude: item['loc_lng'] as double,
+              address: item['address'] as String,
+            ),
+          ));
+          print('Place loaded successfully');
+        } else {
+          print('Image file not found, skipping place: ${item['title']}');
+          // Optionally, delete the database entry
+          await db.delete('user_places', where: 'id = ?', whereArgs: [item['id']]);
+        }
+      }
 
-    state = places;
+      state = places;
+      print('Places loaded successfully: ${places.length} items');
+    } catch (e) {
+      print('Error loading places: $e');
+      state = [];
+    }
   }
 
-  void addPlace(String title, File image, PlaceLocation location) async{
-    final appDir = await sysPaths.getApplicationDocumentsDirectory();
-    final fileName = path.basename(image.path);
+  Future<void> addPlace(String title, File image, PlaceLocation location) async{
+    // Image is already saved by image_input widget
+    // Just use it directly
     
-    // Ensure the directory exists
-    if (!await appDir.exists()) {
-      await appDir.create(recursive: true);
-    }
+    print('Adding place: $title');
+    print('Image path: ${image.path}');
+    print('Image exists: ${await image.exists()}');
     
-    // Read bytes from source and write to destination
-    // This is more reliable than copy() when dealing with temp files
-    final imageBytes = await image.readAsBytes();
-    final savedImagePath = '${appDir.path}/$fileName';
-    final savedImage = File(savedImagePath);
-    await savedImage.writeAsBytes(imageBytes);
-
     final newPlace = Place(
       title: title,
-      image: savedImage,
+      image: image,
       location: location,
     );
     
     final db = await _getDatabase();
+    print('Database path: ${await sql.getDatabasesPath()}');
+    
     await db.insert('user_places', {
       'id': newPlace.id,
       'title': newPlace.title,
-      'image': savedImage.path,
+      'image': image.path,
       'loc_lat': newPlace.location.latitude,
       'loc_lng': newPlace.location.longitude,
       'address': newPlace.location.address,
     });
+    
+    print('Place saved to database successfully');
 
     state = [newPlace, ...state];
   }

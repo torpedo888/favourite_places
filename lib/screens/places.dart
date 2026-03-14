@@ -17,6 +17,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
   @override
   void initState() {
     super.initState();
+    print('PlacesListScreen initState - loading places from database');
     // Load places from database when widget initializes
     _placesFuture = ref.read(placesProvider.notifier).loadPlaces();
   }
@@ -50,6 +51,13 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                 child: CircularProgressIndicator(),
               );
             }
+            
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Error loading places: ${snapshot.error}'),
+              );
+            }
+            
             return PlacesList(places: places);
           },
         ),
